@@ -1,0 +1,13 @@
+{
+  "server": {
+    "baseDir": [
+      "./client",
+      "./ether/build/contracts"
+    ],
+    "routes": {
+      "/libs": "./node_modules",
+      "/ether": "./ether/build/contracts"
+    }
+  },
+  "port": "8081"
+}

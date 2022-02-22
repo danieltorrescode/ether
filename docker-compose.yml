@@ -1,0 +1,22 @@
+version: '3.7'
+
+services:
+  node:
+    container_name: ether
+    build:
+      context: .
+      dockerfile: DockerFile.node
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8080"
+      - "8001:8081"
+      - "8545:8545"
+    stdin_open: true
+    tty: true
+    networks:
+      - dev
+networks:
+  dev:
+    external:
+      name: dev

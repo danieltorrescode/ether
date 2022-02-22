@@ -1,0 +1,33 @@
+FROM node:latest
+
+# Create app directory
+RUN mkdir /app
+WORKDIR /app
+
+# add current directory code to working directory
+ADD . /app
+
+# install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    vim \
+    && \
+    apt-get clean && \
+    npm install npm@latest -g \
+    npm audit fix --force && \
+    npm install && \
+    npm install truffle -g && \
+    npm install ganache-cli@latest --global && \
+    rm -rf /var/lib/apt/lists/*
+
+# change permission entrypoint.sh
+RUN chmod 755 ./.docker/entrypoint.sh
+
+USER node
+
+# run entrypoint.sh
+ENTRYPOINT ["sh", "/app/.docker/entrypoint.sh"]
+
+# Install app dependencies
+# RUN npm install
+
+CMD [ "npm", "run", "server"]
