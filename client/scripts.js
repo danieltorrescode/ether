@@ -4,8 +4,8 @@ App = {
     await App.loadWeb3();
     await App.loadAccount();
     await App.loadContract();
-    // await App.render();
-    // await App.renderTasks();
+    await App.showAccount();
+    await App.getTasks();
   },
   loadWeb3: async () => {
     if (window.ethereum) {
@@ -37,10 +37,10 @@ App = {
       console.error(error);
     }
   },
-  render: async () => {
+  showAccount: async () => {
     document.getElementById("account").innerText = App.account;
   },
-  renderTasks: async () => {
+  getTasks: async () => {
     const tasksCounter = await App.tasksContract.tasksCounter();
     const taskCounterNumber = tasksCounter.toNumber();
 
@@ -54,25 +54,19 @@ App = {
       const taskDone = task[3];
       const taskCreatedAt = task[4];
 
-      // Creating a task Card
-      let taskElement = `<div class="card bg-dark rounded-0 mb-2">
-        <div class="card-header d-flex justify-content-between align-items-center">
-          <span>${taskTitle}</span>
-          <div class="form-check form-switch">
-            <input class="form-check-input" data-id="${taskId}" type="checkbox" onchange="App.toggleDone(this)" ${
-              taskDone === true && "checked"
-            }>
-          </div>
-        </div>
-        <div class="card-body">
-          <span>${taskDescription}</span>
-          <span>${taskDone}</span>
-          <p class="text-muted">Task was created ${new Date(
-            taskCreatedAt * 1000
-          ).toLocaleString()}</p>
-          </label>
-        </div>
-      </div>`;
+      let taskElement = `
+        <tr>
+          <th scope="row">${taskId}</th>
+          <td>${taskTitle}</td>
+          <td>${taskDescription}</td>
+          <td>
+            <input class="form-check-input" data-id="${taskId}"
+            type="checkbox" onchange="App.toggleDone(this)" ${ taskDone === true && "checked" }
+            >
+          </td>
+          <td>${new Date(taskCreatedAt * 1000).toLocaleString()}</td>
+        </tr>
+      `;
       html += taskElement;
     }
 
@@ -97,3 +91,13 @@ App = {
     window.location.reload();
   },
 };
+
+App.init();
+const taskForm = document.querySelector("#taskForm");
+
+taskForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const title = taskForm["title"].value;
+  const description = taskForm["description"].value;
+  App.createTask(title, description);
+});
