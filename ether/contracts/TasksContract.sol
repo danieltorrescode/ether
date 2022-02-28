@@ -24,7 +24,7 @@ contract TasksContract {
     mapping(uint256 => Task) public tasks;
 
     constructor() {
-        createTask("Task 1", "first task");
+        createTask("Task 1", "Description");
     }
 
     function createTask(string memory _title, string memory _description)
