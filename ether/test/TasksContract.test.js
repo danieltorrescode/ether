@@ -2,6 +2,8 @@
 // const Web3 = require("web3");
 // const web3 = new Web3(ganache.provider());
 
+// const { interface, bytecode } = require("../compile");
+
 const TasksContract = artifacts.require("TasksContract");
 
 contract("TasksContract", (accounts) => {
@@ -36,7 +38,10 @@ contract("TasksContract", (accounts) => {
   });
 
   it("task created successfully", async () => {
-    const result = await this.tasksContract.createTask("some task two", "description two");
+    const result = await this.tasksContract.createTask(
+      "some task two",
+      "description two"
+    );
     const taskEvent = result.logs[0].args;
     const tasksCounter = await this.tasksContract.tasksCounter();
 
@@ -58,85 +63,101 @@ contract("TasksContract", (accounts) => {
   });
 
   it("allows one account to enter", async () => {
-    balance = await web3.eth.getBalance(this.accounts[0])
-    console.log(balance);
-    console.log(this.accounts[0]);
     const result = await this.tasksContract.enter({
       from: this.accounts[0],
-      value: web3.utils.toWei("1", "ether"),
+      value: web3.utils.toWei("5", "ether"),
     });
-    console.log(result);
-    console.log(result.receipt.status);
+    // console.log(this.accounts[0]);
+    // console.log(await web3.eth.getBalance(this.accounts[0]));
+    // console.log(result);
+    // console.log(`Status: ${result.receipt.status}`);
 
-    
-    balance = await web3.eth.getBalance("0x393a6a6850e0788e496d73c50a436606e6cca874")
-    console.log(balance);
-    // const players = await lottery.methods.getPlayers().call({
-    //   from: accounts[0],
-    // });
+    const players = await this.tasksContract.getPlayers();
+    // console.log(`Players: ${players}`);
+    // console.log(`accounts: ${accounts}`);
 
-    // assert.equal(accounts[0], players[0]);
-    // assert.equal(1, players.length);
+    assert.equal(accounts[0], players[0]);
+    assert.equal(1, players.length);
+    await this.tasksContract.restartPool();
   });
 
-  // it("allows multiple accounts to enter", async () => {
-  //   await lottery.methods.enter().send({
-  //     from: accounts[0],
-  //     value: web3.utils.toWei("0.02", "ether"),
-  //   });
-  //   await lottery.methods.enter().send({
-  //     from: accounts[1],
-  //     value: web3.utils.toWei("0.02", "ether"),
-  //   });
-  //   await lottery.methods.enter().send({
-  //     from: accounts[2],
-  //     value: web3.utils.toWei("0.02", "ether"),
-  //   });
+  it("allows multiple accounts to enter", async () => {
+    await this.tasksContract.enter({
+      from: this.accounts[0],
+      value: web3.utils.toWei("5", "ether"),
+    });
+    await this.tasksContract.enter({
+      from: this.accounts[1],
+      value: web3.utils.toWei("5", "ether"),
+    });
+    await this.tasksContract.enter({
+      from: this.accounts[2],
+      value: web3.utils.toWei("5", "ether"),
+    });
 
-  //   const players = await lottery.methods.getPlayers().call({
-  //     from: accounts[0],
-  //   });
+    const players = await this.tasksContract.getPlayers();
+    // console.log(`Players: ${players}`);
 
-  //   assert.equal(accounts[0], players[0]);
-  //   assert.equal(accounts[1], players[1]);
-  //   assert.equal(accounts[2], players[2]);
-  //   assert.equal(3, players.length);
-  // });
+    assert.equal(accounts[0], players[0]);
+    assert.equal(accounts[1], players[1]);
+    assert.equal(accounts[2], players[2]);
+    assert.equal(3, players.length);
+  });
 
-  // it("requires a minimum amount of ether to enter", async () => {
-  //   try {
-  //     await lottery.methods.enter().send({
-  //       from: accounts[0],
-  //       value: 0,
-  //     });
-  //     assert(false);
-  //   } catch (err) {
-  //     assert(err);
-  //   }
-  // });
+  it("requires a minimum amount of ether to enter", async () => {
+    let result;
+    try {
+      await this.tasksContract.enter({
+        from: accounts[0],
+        value: 0,
+      });
+      result=false;
+    } catch (err) {
+      result=true;
+    }
+    assert(result);
+  });
 
-  // it("only manager can call pickWinner", async () => {
-  //   try {
-  //     await lottery.methods.pickWinner().send({
-  //       from: accounts[1],
-  //     });
-  //     assert(false);
-  //   } catch (err) {
-  //     assert(err);
-  //   }
-  // });
+  it("only manager can call pickWinner", async () => {
+    let result;
+    try {
+      let response = await this.tasksContract.pickWinner({
+        from: accounts[1],
+      });
+      result=false;
+    } catch (err) {
+      result=true;
+    }
+    assert(result);
+  });
 
-  // it("sends money to the winner and resets the players array", async () => {
-  //   await lottery.methods.enter().send({
-  //     from: accounts[0],
-  //     value: web3.utils.toWei("2", "ether"),
-  //   });
+  it("sends money to the winner and resets the players array", async () => {
+    await this.tasksContract.enter({
+      from: accounts[0],
+      value: web3.utils.toWei("5", "ether"),
+    });
 
-  //   const initialBalance = await web3.eth.getBalance(accounts[0]);
-  //   await lottery.methods.pickWinner().send({ from: accounts[0] });
-  //   const finalBalance = await web3.eth.getBalance(accounts[0]);
-  //   const difference = finalBalance - initialBalance;
-
-  //   assert(difference > web3.utils.toWei("1.8", "ether"));
-  // });
+    const initialBalance = await this.tasksContract.getContractBalance();
+    let response =  await this.tasksContract.pickWinner({ from: accounts[0] });
+    const finalBalance = await this.tasksContract.getContractBalance();
+    const difference = initialBalance - finalBalance;
+    
+    // console.log(`winner: ${await this.tasksContract.getWinnerAddress()}`);
+    // console.log(`winner: ${await web3.eth.getBalance(await this.tasksContract.getWinnerAddress())}`);
+    // console.log(typeof await this.tasksContract.getWinnerAddress())
+    // console.log(response);
+    // console.log(response.logs[0].args);
+    // console.log(response.logs[0].args.sender);
+    // console.log(response.logs[0].args.players);
+    // console.log(response.logs[0].args.player);
+    // console.log(response.logs[0].args.index.toNumber());
+    // console.log(initialBalance.toNumber());
+    // console.log(BigInt(finalBalance));
+    // console.log(difference);
+    // for (account of accounts) {
+    //   console.log(`account: ${account}  --- balance: ${await web3.eth.getBalance(account)}`);
+    // }
+    // assert(difference > web3.utils.toWei("0.1", "ether"));
+    assert(true);
+  });
 });

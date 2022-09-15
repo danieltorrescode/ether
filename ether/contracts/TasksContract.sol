@@ -4,8 +4,9 @@ pragma solidity ^0.8.6;
 contract TasksContract {
     uint256 public tasksCounter = 0;
     address payable public admin;
+    address payable public winner;
     address payable[] public players;
-    mapping (address => uint) balances;
+    mapping(address => uint256) balances;
 
     struct Task {
         uint256 id;
@@ -24,15 +25,24 @@ contract TasksContract {
     );
     event TaskToggledDone(uint256 id, bool done);
 
+    event info(
+        address payable sender,
+        address payable[] players,
+        address payable winner,
+        uint index,
+        uint initial_balance,
+        uint256 final_balance
+    );
+
     mapping(uint256 => Task) public tasks;
 
     constructor() {
         createTask("Task 1", "Description");
-        admin=payable(msg.sender);
+        admin = payable(msg.sender);
     }
 
     modifier restricted() {
-        require(msg.sender == admin);
+        require(payable(msg.sender) == admin);
         _;
     }
 
@@ -63,26 +73,55 @@ contract TasksContract {
         emit TaskToggledDone(_id, _task.done);
     }
 
-    // Function to get 
+    // Function to get
     // address of admin
-    function getContractAddress(
-    ) public view returns (address) {
+    function getContractAddress() public view returns (address) {
         return address(this);
     }
-  
-    // Function to return 
+
+    // Function to return
     // current balance of admin
-    function getContractBalance(
-    ) public view returns(uint256){
+    function getContractBalance() public view returns (uint256) {
         return address(this).balance;
     }
 
     function enter() public payable {
-        require(msg.value >= 10 ether);
+        require(msg.value >= 5 ether);
         players.push(payable(msg.sender));
     }
-    
+
     function getPlayers() public view returns (address payable[] memory) {
         return players;
+    }
+
+    function restartPool() public returns (bool) {
+        delete players;
+        return true;
+    }
+
+    function random() private view returns (uint) {
+        return uint(keccak256(abi.encodePacked(block.difficulty,block.timestamp,players)));
+    }
+    
+    function pickWinner() public restricted returns (address){
+        uint index = random() % players.length;
+        uint initial_balance = address(this).balance;
+        winner = players[index];
+        players[index].transfer(address(this).balance);
+        emit info(
+            payable(msg.sender),
+            players,
+            winner,
+            index,
+            initial_balance,
+            address(this).balance
+        );
+        // players = new address payable [](0);
+        delete players;
+        return address(winner);
+    }
+
+    function getWinnerAddress() public view returns (address) {
+        return address(winner);
     }
 }
