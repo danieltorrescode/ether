@@ -1,4 +1,5 @@
 #!/bin/bash
-ganache-cli --host 0.0.0.0 &
+npm install
+ganache-cli --host 0.0.0.0 --deterministic &
 echo 'entrypoint.sh';
 exec "$@"

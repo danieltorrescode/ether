@@ -9,5 +9,6 @@
       "/ether": "./ether/build/contracts"
     }
   },
-  "port": "8081"
+  "port": "8000",
+  "open": false
 }

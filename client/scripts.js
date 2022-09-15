@@ -5,12 +5,13 @@ App = {
     await App.loadAccount();
     await App.loadContract();
     await App.showAccount();
+    await App.showInfo();
     await App.getTasks();
   },
   loadWeb3: async () => {
     if (window.ethereum) {
       App.web3Provider = window.ethereum;
-      await window.ethereum.request({ method: "eth_requestAccounts" });
+      App.web3 = new Web3(App.web3Provider);
     } else if (web3) {
       web3 = new Web3(window.web3.currentProvider);
     } else {
@@ -40,6 +41,11 @@ App = {
   showAccount: async () => {
     document.getElementById("account").innerText = App.account;
   },
+  showInfo: async () => {
+    console.log(`getContractAddress: ${await App.tasksContract.getContractAddress()}`);
+    console.log(`getContractBalance: ${await App.tasksContract.getContractBalance()}`);
+    console.log(`getBalance: ${await App.web3.eth.getBalance(App.account)}`);
+  },
   getTasks: async () => {
     const tasksCounter = await App.tasksContract.tasksCounter();
     const taskCounterNumber = tasksCounter.toNumber();
@@ -61,7 +67,9 @@ App = {
           <td>${taskDescription}</td>
           <td>
             <input class="form-check-input" data-id="${taskId}"
-            type="checkbox" onchange="App.toggleDone(this)" ${ taskDone === true && "checked" }
+            type="checkbox" onchange="App.toggleDone(this)" ${
+              taskDone === true && "checked"
+            }
             >
           </td>
           <td>${new Date(taskCreatedAt * 1000).toLocaleString()}</td>
@@ -79,6 +87,17 @@ App = {
       });
       console.log(result.logs[0].args);
       window.location.reload();
+    } catch (error) {
+      console.error(error);
+    }
+  },
+  sendPayment: async () => {
+    try {
+      let result = await App.tasksContract.enter({
+        from: App.account,
+        value: App.web3.utils.toWei("10", "ether"),
+      });
+      console.log(result);
     } catch (error) {
       console.error(error);
     }

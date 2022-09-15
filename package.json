@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "server": "lite-server",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "cd ether && truffle test",
+    "compile": "cd ether && truffle compile",
+    "deploy": "cd ether && truffle deploy"
   },
   "author": "danieltorres2902@gmail.com",
   "license": "ISC",
@@ -15,6 +17,9 @@
   "dependencies": {
     "@truffle/contract": "^4.2.3",
     "bootstrap": "^5.0.2",
-    "chai": "^4.3.4"
+    "chai": "^4.3.4",
+    "ganache-cli": "^6.12.2",
+    "mocha": "^10.0.0",
+    "web3": "^1.7.5"
   }
 }

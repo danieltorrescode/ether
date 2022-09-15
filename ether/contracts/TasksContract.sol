@@ -3,6 +3,9 @@ pragma solidity ^0.8.6;
 
 contract TasksContract {
     uint256 public tasksCounter = 0;
+    address payable public admin;
+    address payable[] public players;
+    mapping (address => uint) balances;
 
     struct Task {
         uint256 id;
@@ -25,6 +28,12 @@ contract TasksContract {
 
     constructor() {
         createTask("Task 1", "Description");
+        admin=payable(msg.sender);
+    }
+
+    modifier restricted() {
+        require(msg.sender == admin);
+        _;
     }
 
     function createTask(string memory _title, string memory _description)
@@ -52,5 +61,28 @@ contract TasksContract {
         _task.done = !_task.done;
         tasks[_id] = _task;
         emit TaskToggledDone(_id, _task.done);
+    }
+
+    // Function to get 
+    // address of admin
+    function getContractAddress(
+    ) public view returns (address) {
+        return address(this);
+    }
+  
+    // Function to return 
+    // current balance of admin
+    function getContractBalance(
+    ) public view returns(uint256){
+        return address(this).balance;
+    }
+
+    function enter() public payable {
+        require(msg.value >= 10 ether);
+        players.push(payable(msg.sender));
+    }
+    
+    function getPlayers() public view returns (address payable[] memory) {
+        return players;
     }
 }
